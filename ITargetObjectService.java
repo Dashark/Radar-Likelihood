@@ -1,6 +1,8 @@
-package com.powervotex.localserver.radar.service;
+package com.powervotex.localserver.algorithm.service;
 
 import java.util.Set;
+
+import com.powervotex.localserver.algorithm.dto.CoObject;
 
 /**
  * 目标（Target）与检测对象（Object）的关联概率服务

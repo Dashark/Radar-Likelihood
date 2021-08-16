@@ -1,4 +1,4 @@
-package com.powervotex.localserver.radar.service;
+package com.powervotex.localserver.algorithm.dto;
 
 import java.io.Serializable;
 
@@ -37,7 +37,7 @@ public class CoObject implements Serializable {
 		this.Z = Z;
 	}
 
-	public setEigen(CoObject other) {
+	public void setEigen(CoObject other) {
 		X = other.X;
 		Y = other.Y;
 		Z = other.Z;
