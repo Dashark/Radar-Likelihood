@@ -120,8 +120,19 @@ public class MagicSquareExample1 {
       for (int n = 3; n <= 3; n++) {
          print(fixedWidthIntegertoString(n,7));
 
-         Matrix M = magic(n);
-
+         // Matrix M = magic(n);
+         Matrix M = new Matrix(3, 3, 0.01); 
+         M.set(0, 0, 0.005);
+         M.set(1, 1, 0.005);
+         M.set(2, 2, 0.005);
+         Matrix target = Matrix.random(3,1);
+         target.print(3, 1);
+         Matrix object = Matrix.random(3,1);
+         object.print(3, 1);
+         Matrix to = target.minus(object);
+         to.print(3, 1);
+         Matrix to_t = to.transpose();
+/*
          int t = (int) M.trace();
          print(fixedWidthIntegertoString(t,10));
 
@@ -151,13 +162,23 @@ public class MagicSquareExample1 {
          R = Q.times(R).minus(M);
          res = R.norm1()/(n*eps);
          print(fixedWidthDoubletoString(res,12,3));
-
+*/
          print("\n");
          M.print(n, n);
          Matrix M1 = M.transpose();
          M1.print(n, n);
          Matrix M2 = M.inverse();
          M2.print(n, n);
+         print(fixedWidthDoubletoString(M2.normInf(), 12, 3));
+         Matrix sub = M.getMatrix(0, 0, 0, 2);
+         sub.print(3,3);
+         print(fixedWidthDoubletoString(sub.normInf(), 12, 3));
+         Matrix to_times = to_t.times(M2);
+         Matrix to_times1 = to_times.times(to);
+         to_times.print(3,3);
+         to_times1.print(1,3);
+         Matrix arraytimes = to_times.arrayTimes(sub);
+         arraytimes.print(3,3);
          print(fixedWidthDoubletoString(M.det(),12,3));
          print("\n");
          print(fixedWidthDoubletoString(M1.det(),12,3));

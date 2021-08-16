@@ -8,24 +8,25 @@ import java.util.Set;
  */
 public interface ITargetObjectService {
 
-	/*
-	 * 保存场景中存在的检测对象<br/>
+	/**
+	 * 更新场景中相关对象的清单
+	 * 更新针对于整个场景，不是一部分。
 	 * 
-	 * @param objs 检测对象列表
-	 * @return 加入的检测对象数量
+	 * @param targets 实际的业务目标
+	 * @param radars  雷达检测的对象
+	 * @return 更新对象的数量
 	 */
-	public int updateRadarObjects(Set<RadarObject> objs);
+	public int updateObjects(Set<CoObject> targets, Set<CoObject> radars);
 
 	/**
-	 * RFID 手段确认目标与检测对象之间的关联。
-	 * 同时业务上新增一个目标，目前没有其它接口可以新增目标
+	 * 通过RFID技术手段绑定业务目标与雷达检测对象
+	 * 它们应该存在于对象的清单中。
+	 * 
+	 * @param target
+	 * @param radar
+	 * @return
 	 */
-	public boolean matchByRFID(BusinessTarget btar, RadarObject rtar);
-	
-	/**
-	 * 业务上怎么减少一个目标？ 这儿不清楚
-	 */
-	public int removeTargets(Set<BusinessTarget> objs);
+	public boolean matchByRFID(CoObject target, CoObject radar);
 	
 	/**
 	 * 查询目标的关联概率。
@@ -33,6 +34,6 @@ public interface ITargetObjectService {
 	 * @param Object target 目标
 	 * @return float 概率
 	 */
-	public Map<RadarObject, Decimal> queryProbability(BusinessTarget btar);
+	public double[] queryProbability();
 
 }
