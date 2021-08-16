@@ -95,6 +95,52 @@ public class MagicSquareExample1 {
       return s;
    }
 
+	private static final int Dimension = 3; 
+	private static Matrix _sigma_coefficient = new Matrix(Dimension, Dimension, 0.01);
+	private static Matrix _sigma_inv;
+	private static double _sigma_det, _sigma_prev;
+
+	public static void CorrelationProbabilityServiceImpl() {
+		_sigma_coefficient.set(0, 0, 0.005);
+		_sigma_coefficient.set(1, 1, 0.005);
+		_sigma_coefficient.set(2, 2, 0.005);
+
+		_sigma_det = Math.sqrt(_sigma_coefficient.det());
+		_sigma_inv = _sigma_coefficient.inverse();
+		_sigma_prev = Math.pow(2 * Math.PI, Dimension / 2.0);
+	}
+
+	public static double[] calcuateProbability(double[] cond_array, double[] tarobj_array) {
+		Matrix cond = new Matrix(cond_array, 1); 
+		Matrix target_obj = new Matrix(tarobj_array, 3);
+		assert (target_obj.getRowDimension() == 3); 
+		// a set of target to only one object
+		Matrix results = new Matrix(1, target_obj.getColumnDimension());
+
+		int cols = target_obj.getColumnDimension();
+		for (int i = 0; i < cols; ++i) {
+			Matrix temp = target_obj.getMatrix(0, Dimension - 1, i, i);
+			Matrix temp_trans = temp.transpose(); 
+			Matrix temp1 = temp_trans.times(_sigma_inv); 
+			Matrix temp2 = temp1.times(temp);
+			double lamda = Math.exp(-temp2.get(0, 0) / 2.0);
+			results.set(0, i, lamda / _sigma_prev / _sigma_det); // prob density of all
+															// targets to one
+															// object
+		}
+		results.arrayTimesEquals(cond);
+		cols = results.getColumnDimension();
+		double[][] results_array = results.getArrayCopy();
+		double result_sum = 0.0;
+		for (int i = 0; i < cols; ++i) {
+			result_sum += results_array[0][i];
+		}
+		for (int i = 0; i < cols; ++i) {
+			results_array[0][i] = results_array[0][i] / result_sum;
+		}
+		return results_array[0];
+	}
+
 
    public static void main (String argv[]) {
 
@@ -114,7 +160,8 @@ public class MagicSquareExample1 {
       print("\n    Test of Matrix Class, using magic squares.\n");
       print("    See MagicSquareExample.main() for an explanation.\n");
       print("\n      n     trace       max_eig   rank        cond      lu_res      qr_res\n\n");
- 
+
+      CorrelationProbabilityServiceImpl();
       Date start_time = new Date();
       double eps = Math.pow(2.0,-52.0);
       for (int n = 3; n <= 3; n++) {
@@ -123,6 +170,7 @@ public class MagicSquareExample1 {
          // Matrix M = magic(n);
          Matrix M = new Matrix(3, 3, 0.01); 
          M.set(0, 0, 0.005);
+         M.set(0, 1, 0.1);
          M.set(1, 1, 0.005);
          M.set(2, 2, 0.005);
          Matrix target = Matrix.random(3,1);
@@ -132,37 +180,6 @@ public class MagicSquareExample1 {
          Matrix to = target.minus(object);
          to.print(3, 1);
          Matrix to_t = to.transpose();
-/*
-         int t = (int) M.trace();
-         print(fixedWidthIntegertoString(t,10));
-
-         EigenvalueDecomposition E =
-            new EigenvalueDecomposition(M.plus(M.transpose()).times(0.5));
-         double[] d = E.getRealEigenvalues();
-         print(fixedWidthDoubletoString(d[n-1],14,3));
-
-         int r = M.rank();
-         print(fixedWidthIntegertoString(r,7));
-
-         double c = M.cond();
-         print(c < 1/eps ? fixedWidthDoubletoString(c,12,3) :
-            "         Inf");
-
-         LUDecomposition LU = new LUDecomposition(M);
-         Matrix L = LU.getL();
-         Matrix U = LU.getU();
-         int[] p = LU.getPivot();
-         Matrix R = L.times(U).minus(M.getMatrix(p,0,n-1));
-         double res = R.norm1()/(n*eps);
-         print(fixedWidthDoubletoString(res,12,3));
-
-         QRDecomposition QR = new QRDecomposition(M);
-         Matrix Q = QR.getQ();
-         R = QR.getR();
-         R = Q.times(R).minus(M);
-         res = R.norm1()/(n*eps);
-         print(fixedWidthDoubletoString(res,12,3));
-*/
          print("\n");
          M.print(n, n);
          Matrix M1 = M.transpose();
@@ -182,6 +199,12 @@ public class MagicSquareExample1 {
          print(fixedWidthDoubletoString(M.det(),12,3));
          print("\n");
          print(fixedWidthDoubletoString(M1.det(),12,3));
+         
+         double[][] Marray = M.getArray();
+         double[] Mone = M.getRowPackedCopy();
+         double[] res = calcuateProbability(Marray[0], Mone);
+         Matrix Mres = new Matrix(res, 1);
+         Mres.print(3,3);
       }
       Date stop_time = new Date();
       double etime = (stop_time.getTime() - start_time.getTime())/1000.;

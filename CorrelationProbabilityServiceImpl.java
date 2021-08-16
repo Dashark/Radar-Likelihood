@@ -40,7 +40,7 @@ public class CorrelationProbabilityServiceImpl implements ICorrelationProbabilit
 	}
 
 	@Override
-	public double[] calcuateProbability(double[] cond_array, double[] tarobj_array) {
+	public double[] calculateProbability(double[] cond_array, double[] tarobj_array) {
 		Matrix cond = new Matrix(cond_array, 1); // 已知的条件概率
 		Matrix target_obj = new Matrix(tarobj_array, 3);
 		assert (target_obj.getRowDimension() == 3); // 3 x n 的矩阵
@@ -49,13 +49,12 @@ public class CorrelationProbabilityServiceImpl implements ICorrelationProbabilit
 
 		int cols = target_obj.getColumnDimension();
 		for (int i = 0; i < cols; ++i) {
-			Matrix temp = target_obj.getMatrix(0, Dimension - 1, i, i); // 取得第 i
-																		// 列
-			Matrix temp_inv = temp.transpose(); // 转置
+			Matrix temp = target_obj.getMatrix(0, Dimension - 1, i, i); // 取得第 i 列
+			Matrix temp_trans = temp.transpose(); // 转置
 			Matrix temp1 = temp_trans.times(_sigma_inv); // 转置 乘以 逆
 			Matrix temp2 = temp1.times(temp);
 			double lamda = Math.exp(-temp2.get(0, 0) / 2.0);
-			results.set(0, i, lamda / prev / _sigma_det); // prob density of all
+			results.set(0, i, lamda / _sigma_prev / _sigma_det); // prob density of all
 															// targets to one
 															// object
 		}

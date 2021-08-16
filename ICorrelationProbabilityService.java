@@ -13,6 +13,6 @@ public interface ICorrelationProbabilityService {
 	 * @param tarobj_array 所有目标对一个检测对象的特征向量
 	 * @return
 	 */
-	public double[] calcuateProbability(double[] cond_array, double[] tarobj_array);
+	public double[] calculateProbability(double[] cond_array, double[] tarobj_array);
 	
 }
