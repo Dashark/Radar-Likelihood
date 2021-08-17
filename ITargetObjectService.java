@@ -42,6 +42,6 @@ public interface ITargetObjectService {
 	 * 查询概率表
 	 * @return Map<target id, Map<radar id, probability>>
 	 */
-	public Map<String, Map<String, Float>> queryProbability();
+	public Map<String, Map<String, Double>> queryProbability();
 
 }

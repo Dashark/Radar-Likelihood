@@ -15,13 +15,13 @@ import com.powervotex.localserver.algorithm.service.ITargetObjectService;
 @Service
 public class TargetObjectServiceImpl implements ITargetObjectService {
 
+	// 算法服务
 	private ICorrelationProbabilityService _cp_service;
-	private Map<CoObject, Integer> _business_targets = Maps.newHashMap();
-	private Set<CoObject> _new_targets = new HashSet<CoObject>();
-	private Set<CoObject> _del_targets = new HashSet<CoObject>();
-	private Map<CoObject, Integer> _radar_objects = Maps.newHashMap();
-	private Set<CoObject> _new_objects = new HashSet<CoObject>();
-	private Set<CoObject> _del_objects = new HashSet<CoObject>();
+	// 以对象关键字映射索引与对象本身
+	private Map<String, Integer> _targets_index = Maps.newHashMap();
+	private Map<String, CoObject> _target_objects = Maps.newHashMap();
+	private Map<String, Integer> _radars_index = Maps.newHashMap();
+	private Map<String, CoObject> _radar_objects = Maps.newHashMap();
 	private double[] _probabilities;
 
 	public TargetObjectServiceImpl() {
@@ -109,16 +109,18 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 	public int updateObjects(Set<CoObject> targets, Set<CoObject> radars) {
 		// 新的概率映射表
 		double[] probs_new = new double[targets.size() * radars.size()];
-		Map<CoObject, Integer> business_targets = Maps.newHashMap();
-		Map<CoObject, Integer> radar_objects = Maps.newHashMap();
+		Map<String, Integer> targets_index = Maps.newHashMap();
+		Map<String, CoObject> target_objects = Maps.newHashMap();
+		Map<String, Integer> radars_index = Maps.newHashMap();
+		Map<String, CoObject> radar_objects = Maps.newHashMap();
 		Integer tar_idx = 0; // 新表的目标索引（行）
 		for (CoObject tar : targets) {
 			Integer obj_idx = 0; // 新表的检测对象索引(列)
-			Integer tidx = _business_targets.get(tar); // 原有目标集合的索引值
+			Integer tidx = _targets_index.get(tar.getID()); // 原有目标集合的索引值
 			if (tidx == null) {
 				// 新增的目标
 				for (CoObject obj : radars) {
-					Integer oidx = _radar_objects.get(obj); // 原有检测对象集合的索引值
+					Integer oidx = _radars_index.get(obj.getID()); // 原有检测对象集合的索引值
 					if (oidx == null) {
 						// 新增的检测对象，对应新增的目标，概率设置较高
 						probs_new[tar_idx * targets.size() + obj_idx] = 0.5;
@@ -126,13 +128,16 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 						// 原有的检测对象，对应新增的目标，概率设置较低
 						probs_new[tar_idx * targets.size() + obj_idx] = 0.05;
 					}
-					radar_objects.put(obj, obj_idx);
+					radar_objects.put(obj.getID(), obj);
+					radars_index.put(obj.getID(), obj_idx);
 					obj_idx += 1; // 下一个检测对象
 				}
 			} else {
 				// 原有的目标，不管原来的Idx
+				CoObject origTar = _target_objects.get(tar.getID());
+				tar.setEigen(origTar); //刷新目标的坐标特征
 				for (CoObject obj : radars) {
-					Integer oidx = _radar_objects.get(obj);
+					Integer oidx = _radars_index.get(obj.getID());
 					if (oidx == null) {
 						// 新增的检测对象，对应原有的目标，概率设置很低
 						probs_new[tar_idx * targets.size() + obj_idx] = 0.05;
@@ -141,29 +146,33 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 						probs_new[tar_idx * targets.size() + obj_idx] = _probabilities[tidx * _business_targets.size()
 								+ oidx];
 					}
-					radar_objects.put(obj, obj_idx);
+					radars_index.put(obj.getID(), obj_idx);
+					radar_objects.put(obj.getID(), obj);
 					obj_idx += 1; // 下一个检测对象
 				}
 			}
-			business_targets.put(tar, tar_idx);
+			targets_index.put(tar.getID(), tar_idx);
+			target_objects.put(tar.getID(), tar);
 			tar_idx += 1; // 下一个目标
 		}
 		_probabilities = probs_new; // 替换概率表，此时为条件概率
-		_business_targets = business_targets;
+		_target_objects = target_objects;
+		_targets_index = targets_index;
 		_radar_objects = radar_objects;
+		_radars_index = radars_index;
 		return targets.size() + radars.size();
 	}
 
 	@Override
 	public boolean matchByRFID(CoObject target, CoObject radar) {
-		Integer tidx = _business_targets.get(target);
-		Integer oidx = _radar_objects.get(radar);
+		Integer tidx = _targets_index.get(target.getID());
+		Integer oidx = _radars_index.get(radar.getID());
 		if (tidx != null && oidx != null) {
 			for (int i = 0; i < _radar_objects.size(); ++i) {
 				// 原有概率全部清零
-				_probabilities[tidx * _business_targets.size() + i] = 0.0;
+				_probabilities[tidx * _target_objects.size() + i] = 0.0;
 			}
-			_probabilities[tidx * _business_targets.size() + oidx] = 1.0; // 确定是匹配的
+			_probabilities[tidx * _target_objects.size() + oidx] = 1.0; // 确定是匹配的
 			target.setEigen(radar);
 			return true;
 		}
@@ -173,45 +182,45 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 	@Override
 	public double[] calculateProbability() {
 		// 特征向量 3 x n
-		double[] tarobjs = new double[3 * _business_targets.size()];
+		double[] tarobjs = new double[3 * _target_objects.size()];
 		// 条件概率 1 x n
-		double[] cond = new double[_business_targets.size()];
-		for (CoObject obj : _radar_objects.keySet()) {
+		double[] cond = new double[_target_objects.size()];
+		for (CoObject obj : _radar_objects.values()) {
 			// 一个检测对象
-			Integer obj_idx = _radar_objects.get(obj);
+			Integer obj_idx = _radars_index.get(obj.getID());
 			// 映射所有的目标
-			for (CoObject tar : _business_targets.keySet()) {
-				Integer tar_idx = _business_targets.get(tar);
+			for (CoObject tar : _target_objects.values()) {
+				Integer tar_idx = _targets_index.get(tar.getID());
 				// 上一轮概率作为条件概率
-				cond[tar_idx] = _probabilities[tar_idx * _business_targets.size() + obj_idx];
+				cond[tar_idx] = _probabilities[tar_idx * _target_objects.size() + obj_idx];
 				double[] temps = tar.subEigen(obj);
 				// 行转换列
 				tarobjs[tar_idx] = temps[0];
-				tarobjs[tar_idx + _business_targets.size()] = temps[1];
-				tarobjs[tar_idx + _business_targets.size() * 2] = temps[2];
+				tarobjs[tar_idx + _target_objects.size()] = temps[1];
+				tarobjs[tar_idx + _target_objects.size() * 2] = temps[2];
 			}
 			// 计算新的概率（一个检测对象与所有目标的）
 			double[] prob_obj = _cp_service.calcuateProbability(cond, tarobjs);
 			// 更新概率表, 按照检测对象更新所有目标
-			for (CoObject tar : _business_targets.keySet()) {
-				Integer tar_idx = _business_targets.get(tar);
-				_probabilities[tar_idx * _business_targets.size() + obj_idx] = prob_obj[tar_idx];
+			for (CoObject tar : _target_objects.values()) {
+				Integer tar_idx = _targets_index.get(tar.getID());
+				_probabilities[tar_idx * _target_objects.size() + obj_idx] = prob_obj[tar_idx];
 			}
 
 		}
 		return _probabilities;
 	}
 	@Override
-	public Map<String, Map<String, Float>> queryProbability() {
+	public Map<String, Map<String, Double>> queryProbability() {
 		Map<String, Map<String, Float>> results = Maps.newHashMap();
-		for (CoObject tar : _business_targets.keySet()) {
+		for (CoObject tar : _target_objects.values()) {
 			// 一个目标
-			Integer tar_idx = _business_targets.get(tar);
-			Map<String, Float> radar_result = Maps.newHashMap();
-			for (CoObject obj : _radar_objects.keySet()) {
+			Integer tar_idx = _targets_index.get(tar.getID());
+			Map<String, Double> radar_result = Maps.newHashMap();
+			for (CoObject obj : _radar_objects.values()) {
 				// 一个检测对象
-				Integer obj_idx = _radar_objects.get(obj);
-				radar_result.put(obj.getID(), _probabilities[tar_idx * _business_targets.size() + obj_idx]);
+				Integer obj_idx = _radars_index.get(obj.getID());
+				radar_result.put(obj.getID(), _probabilities[tar_idx * _target_objects.size() + obj_idx]);
 			}
 			results.put(tar.getID(), radar_result);
 		}

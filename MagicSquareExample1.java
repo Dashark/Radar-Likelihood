@@ -102,17 +102,31 @@ public class MagicSquareExample1 {
 
 	public static void CorrelationProbabilityServiceImpl() {
 		_sigma_coefficient.set(0, 0, 0.005);
+      _sigma_coefficient.set(0, 1, 0.1);
 		_sigma_coefficient.set(1, 1, 0.005);
 		_sigma_coefficient.set(2, 2, 0.005);
+      print("Covariance : \n");
+      _sigma_coefficient.print(Dimension, Dimension);
 
 		_sigma_det = Math.sqrt(_sigma_coefficient.det());
+      print("Covariance Determinant Squart :\n");
+      print(fixedWidthDoubletoString(_sigma_det, 12, 13));
+      print("\n");
 		_sigma_inv = _sigma_coefficient.inverse();
+      print("Covariance Inverse :\n");
+      _sigma_inv.print(Dimension, Dimension);
+      print("\n");
 		_sigma_prev = Math.pow(2 * Math.PI, Dimension / 2.0);
+      print("2 * PI (K/2) :\n");
+      print(fixedWidthDoubletoString(_sigma_prev, 12, 3));
+      print("\n");
 	}
 
 	public static double[] calcuateProbability(double[] cond_array, double[] tarobj_array) {
 		Matrix cond = new Matrix(cond_array, 1); 
+      cond.print(3,3);
 		Matrix target_obj = new Matrix(tarobj_array, 3);
+      target_obj.print(3,3);
 		assert (target_obj.getRowDimension() == 3); 
 		// a set of target to only one object
 		Matrix results = new Matrix(1, target_obj.getColumnDimension());
@@ -120,10 +134,14 @@ public class MagicSquareExample1 {
 		int cols = target_obj.getColumnDimension();
 		for (int i = 0; i < cols; ++i) {
 			Matrix temp = target_obj.getMatrix(0, Dimension - 1, i, i);
+         temp.print(3,3);
 			Matrix temp_trans = temp.transpose(); 
 			Matrix temp1 = temp_trans.times(_sigma_inv); 
 			Matrix temp2 = temp1.times(temp);
+         temp2.print(3,3);
 			double lamda = Math.exp(-temp2.get(0, 0) / 2.0);
+         print(fixedWidthDoubletoString(lamda, 12, 13));
+         print("\n");
 			results.set(0, i, lamda / _sigma_prev / _sigma_det); // prob density of all
 															// targets to one
 															// object
@@ -165,7 +183,7 @@ public class MagicSquareExample1 {
       Date start_time = new Date();
       double eps = Math.pow(2.0,-52.0);
       for (int n = 3; n <= 3; n++) {
-         print(fixedWidthIntegertoString(n,7));
+         //print(fixedWidthIntegertoString(n,7));
 
          // Matrix M = magic(n);
          Matrix M = new Matrix(3, 3, 0.01); 
@@ -173,19 +191,17 @@ public class MagicSquareExample1 {
          M.set(0, 1, 0.1);
          M.set(1, 1, 0.005);
          M.set(2, 2, 0.005);
-         Matrix target = Matrix.random(3,1);
-         target.print(3, 1);
+         Matrix M1 = M.transpose();
+         //print("Covariance Transpose :\n");
+         //M1.print(n, n);
+         Matrix M2 = M.inverse();
+         /*
          Matrix object = Matrix.random(3,1);
          object.print(3, 1);
          Matrix to = target.minus(object);
          to.print(3, 1);
          Matrix to_t = to.transpose();
          print("\n");
-         M.print(n, n);
-         Matrix M1 = M.transpose();
-         M1.print(n, n);
-         Matrix M2 = M.inverse();
-         M2.print(n, n);
          print(fixedWidthDoubletoString(M2.normInf(), 12, 3));
          Matrix sub = M.getMatrix(0, 0, 0, 2);
          sub.print(3,3);
@@ -199,11 +215,18 @@ public class MagicSquareExample1 {
          print(fixedWidthDoubletoString(M.det(),12,3));
          print("\n");
          print(fixedWidthDoubletoString(M1.det(),12,3));
-         
-         double[][] Marray = M.getArray();
-         double[] Mone = M.getRowPackedCopy();
+         */
+         Matrix cond = Matrix.random(1,3);
+         print("Conditional Probability :\n");
+         cond.print(3, 3);
+         double[][] Marray = cond.getArray();
+         Matrix coord = Matrix.random(3,3);
+         print("x - Oj :\n");
+         coord.print(3, 3);
+         double[] Mone = coord.getColumnPackedCopy();
          double[] res = calcuateProbability(Marray[0], Mone);
          Matrix Mres = new Matrix(res, 1);
+         print("Result :\n");
          Mres.print(3,3);
       }
       Date stop_time = new Date();
