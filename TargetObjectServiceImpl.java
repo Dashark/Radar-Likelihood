@@ -1,5 +1,6 @@
 package com.powervotex.localserver.algorithm.service.impl;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -27,24 +28,83 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 
 	}
 
-	private Set<CoObject> diffSet(Set<CoObject> orig, Set<CoObject> newSet) {
-		return new HashSet<CoObject>();
-	}
+	/*
+	public class CoResult {
+		private CoObject target, radar;
+		// public int target_idx, radar_idx;
+		private float probability;
+		public CoResult(CoObject target, CoObject radar) {
+			this.target = target;
+			this.radar = radar;
+			probability = 0.0f;
+		}
 
-	/**
-	 * 清除 probabilities 中消失的目标和检测对象的概率
-	 * 
-	 * @param targets
-	 * @param radars
-	 */
-	private double[] removeProbs(Integer[] targets, Integer[] radars) {
-		return null;
-	}
+		public float modifyProb(float prob) {
+			float ret = probability;
+			probability = prob;
+			return ret;
+		}
 
-	private Integer[] mapIndex(Map<CoObject, Integer> maps, Set<CoObject> objs) {
-		return null;
-	}
+		public float modifyProb(CoResult other) {
+			float ret = probability;
+			probability = other.probability;
+			return ret;
+		}
 
+		public boolean equalTarget(CoResult other) {
+			if (target.equals(other.target))
+				return true;
+			return false;
+		}
+		
+		public boolean equalRadar(CoResult other) {
+			if (radar.equals(other.radar))
+				return true;
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			String tmp = target.getID() + radar.getID();
+			return tmp.hashCode();
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof CoResult) {
+				CoResult cores = (CoResult)obj;
+				return target.equals(cores.target) && radar.equals(cores.radar);
+			}
+			return false;
+		}
+	}
+	*/
+
+	/*
+	@Override
+	public int updateObjects(Set<CoObject> targets, Set<CoObject> radars) {
+		Set<CoResult> corSet = new HashSet<CoResult>();
+		for (CoObject tar : targets) {
+			for (CoObject obj : radars) {
+				CoResult cor = new CoResult(tar, obj); // 新的概率表，0.0
+				corSet.add(cor);
+			}
+		}
+		// 2个List表的数据合并
+		// 原有目标和原有检测对象复制，消失的则丢弃了
+		for (CoResult newCO : corSet) {
+			for (CoResult origCO : prob_map) {
+				boolean radar_eq = newCO.equalRadar(origCO) ;
+				boolean target_eq = newCO.equalTarget(origCO);
+				// 原有的目标和原有的检测对象
+				if (newCO.equals(origCO)) {
+					newCO.modifyProb(origCO);
+				}
+			}
+		}
+		// 新增目标和新增检测对象的概率设置，它们概率应该较高
+		// 新增目标和原有检测对象，原有目标和新增检测对象，它们概率应该很低
+	}
+	*/
 	@Override
 	public int updateObjects(Set<CoObject> targets, Set<CoObject> radars) {
 		// 新的概率映射表
@@ -88,7 +148,7 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 			business_targets.put(tar, tar_idx);
 			tar_idx += 1; // 下一个目标
 		}
-		_probabilities = probs_new; // 刷新概率表
+		_probabilities = probs_new; // 替换概率表，此时为条件概率
 		_business_targets = business_targets;
 		_radar_objects = radar_objects;
 		return targets.size() + radars.size();
@@ -111,10 +171,10 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 	}
 
 	@Override
-	public double[] queryProbability() {
-		// 特征向量
+	public double[] calculateProbability() {
+		// 特征向量 3 x n
 		double[] tarobjs = new double[3 * _business_targets.size()];
-		// 条件概率
+		// 条件概率 1 x n
 		double[] cond = new double[_business_targets.size()];
 		for (CoObject obj : _radar_objects.keySet()) {
 			// 一个检测对象
@@ -122,13 +182,17 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 			// 映射所有的目标
 			for (CoObject tar : _business_targets.keySet()) {
 				Integer tar_idx = _business_targets.get(tar);
+				// 上一轮概率作为条件概率
 				cond[tar_idx] = _probabilities[tar_idx * _business_targets.size() + obj_idx];
 				double[] temps = tar.subEigen(obj);
+				// 行转换列
 				tarobjs[tar_idx] = temps[0];
 				tarobjs[tar_idx + _business_targets.size()] = temps[1];
 				tarobjs[tar_idx + _business_targets.size() * 2] = temps[2];
 			}
+			// 计算新的概率（一个检测对象与所有目标的）
 			double[] prob_obj = _cp_service.calcuateProbability(cond, tarobjs);
+			// 更新概率表, 按照检测对象更新所有目标
 			for (CoObject tar : _business_targets.keySet()) {
 				Integer tar_idx = _business_targets.get(tar);
 				_probabilities[tar_idx * _business_targets.size() + obj_idx] = prob_obj[tar_idx];
@@ -136,5 +200,21 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 
 		}
 		return _probabilities;
+	}
+	@Override
+	public Map<String, Map<String, Float>> queryProbability() {
+		Map<String, Map<String, Float>> results = Maps.newHashMap();
+		for (CoObject tar : _business_targets.keySet()) {
+			// 一个目标
+			Integer tar_idx = _business_targets.get(tar);
+			Map<String, Float> radar_result = Maps.newHashMap();
+			for (CoObject obj : _radar_objects.keySet()) {
+				// 一个检测对象
+				Integer obj_idx = _radar_objects.get(obj);
+				radar_result.put(obj.getID(), _probabilities[tar_idx * _business_targets.size() + obj_idx]);
+			}
+			results.put(tar.getID(), radar_result);
+		}
+		return results;
 	}
 }

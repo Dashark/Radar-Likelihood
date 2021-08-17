@@ -31,11 +31,17 @@ public interface ITargetObjectService {
 	public boolean matchByRFID(CoObject target, CoObject radar);
 	
 	/**
-	 * 查询目标的关联概率。
+	 * 计算目标的关联概率。
 	 * 
 	 * @param Object target 目标
 	 * @return float 概率
 	 */
-	public double[] queryProbability();
+	public double[] calculateProbability();
+
+	/**
+	 * 查询概率表
+	 * @return Map<target id, Map<radar id, probability>>
+	 */
+	public Map<String, Map<String, Float>> queryProbability();
 
 }
