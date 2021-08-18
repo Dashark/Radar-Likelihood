@@ -1,7 +1,5 @@
 package com.powervotex.localserver.algorithm.service.impl;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -200,7 +198,7 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 				tarobjs[tar_idx + _target_objects.size() * 2] = temps[2];
 			}
 			// 计算新的概率（一个检测对象与所有目标的）
-			double[] prob_obj = _cp_service.calcuateProbability(cond, tarobjs);
+			double[] prob_obj = _cp_service.calculateProbability(cond, tarobjs);
 			// 更新概率表, 按照检测对象更新所有目标
 			for (CoObject tar : _target_objects.values()) {
 				Integer tar_idx = _targets_index.get(tar.getID());
@@ -212,7 +210,7 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 	}
 	@Override
 	public Map<String, Map<String, Double>> queryProbability() {
-		Map<String, Map<String, Float>> results = Maps.newHashMap();
+		Map<String, Map<String, Double>> results = Maps.newHashMap();
 		for (CoObject tar : _target_objects.values()) {
 			// 一个目标
 			Integer tar_idx = _targets_index.get(tar.getID());
