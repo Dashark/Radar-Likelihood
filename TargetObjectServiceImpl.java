@@ -143,7 +143,7 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 						probs_new[tar_idx * targets.size() + obj_idx] = 0.05;
 					} else {
 						// 原有的检测对象，对应原有的目标，拷贝上次计算的概率
-						probs_new[tar_idx * targets.size() + obj_idx] = _probabilities[tidx * _business_targets.size()
+						probs_new[tar_idx * targets.size() + obj_idx] = _probabilities[tidx * _target_objects.size()
 								+ oidx];
 					}
 					radars_index.put(obj.getID(), obj_idx);
