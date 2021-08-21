@@ -216,11 +216,12 @@ public class MagicSquareExample1 {
          print("\n");
          print(fixedWidthDoubletoString(M1.det(),12,3));
          */
-         Matrix cond = Matrix.random(1,3);
+         Matrix cond = new Matrix(1, 3, 0.33); //.random(1,1);
          print("Conditional Probability :\n");
+         // cond.set(0, 0, 1);
          cond.print(3, 3);
          double[][] Marray = cond.getArray();
-         Matrix coord = Matrix.random(3,3);
+         Matrix coord = new Matrix(3,3);
          print("x - Oj :\n");
          coord.print(3, 3);
          double[] Mone = coord.getColumnPackedCopy();
