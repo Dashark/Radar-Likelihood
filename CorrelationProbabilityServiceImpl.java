@@ -8,22 +8,25 @@ import com.powervotex.localserver.algorithm.service.ICorrelationProbabilityServi
 
 import Jama.Matrix;
 
+// TODO 需要单元测试，避免以后修改算法再重新验算
 @Service
 public class CorrelationProbabilityServiceImpl implements ICorrelationProbabilityService {
 
 	private final int Dimension = 3; // 目前雷达数据的维度只有3(X,Y,Z)，更多特征就是更多维度。
 	// 雷达协方差矩阵，缺省为0.01，表示1毫米。
 	// 真实矩阵要雷达连续检测的点云坐标来专门计算。
-	private Matrix _sigma_coefficient = new Matrix(Dimension, Dimension, 0.01);
+	private Matrix _sigma_coefficient = Matrix.identity(Dimension, Dimension); //new Matrix(Dimension, Dimension, 0.01);
 	private Matrix _sigma_inv;
 	private double _sigma_det, _sigma_prev;
 
 	@PostConstruct
 	private void init() {
 		// 手工调整对角的方差
+		/*
 		_sigma_coefficient.set(0, 0, 0.005);
 		_sigma_coefficient.set(1, 1, 0.005);
 		_sigma_coefficient.set(2, 2, 0.005);
+		*/
 
 		// 计算协方差矩阵的行列式根
 		_sigma_det = Math.sqrt(_sigma_coefficient.det());
