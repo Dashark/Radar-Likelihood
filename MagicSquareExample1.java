@@ -105,6 +105,7 @@ public class MagicSquareExample1 {
       _sigma_coefficient.set(0, 1, 0.1);
 		_sigma_coefficient.set(1, 1, 0.005);
 		_sigma_coefficient.set(2, 2, 0.005);
+      _sigma_coefficient = Matrix.identity(Dimension, Dimension);
       print("Covariance : \n");
       _sigma_coefficient.print(Dimension, Dimension);
 
@@ -216,12 +217,15 @@ public class MagicSquareExample1 {
          print("\n");
          print(fixedWidthDoubletoString(M1.det(),12,3));
          */
-         Matrix cond = new Matrix(1, 3, 0.33); //.random(1,1);
+         Matrix cond = new Matrix(1, 1, 0.5); //.random(1,1);
          print("Conditional Probability :\n");
          // cond.set(0, 0, 1);
          cond.print(3, 3);
          double[][] Marray = cond.getArray();
-         Matrix coord = new Matrix(3,3);
+         Matrix coord = new Matrix(3,1, 1);
+         // coord.set(0, 1, 0.1);
+         // coord.set(0, 2, 0.1);
+         // coord.set(1, 2, 0.1);
          print("x - Oj :\n");
          coord.print(3, 3);
          double[] Mone = coord.getColumnPackedCopy();
