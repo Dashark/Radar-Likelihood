@@ -1,7 +1,5 @@
 package com.powervotex.localserver.algorithm.service.impl;
 
-import javax.annotation.PostConstruct;
-
 import org.springframework.stereotype.Service;
 
 import com.powervotex.localserver.algorithm.service.ICorrelationProbabilityService;
@@ -19,8 +17,15 @@ public class CorrelationProbabilityServiceImpl implements ICorrelationProbabilit
 	private Matrix _sigma_inv;
 	private double _sigma_det, _sigma_prev;
 
-	@PostConstruct
-	private void init() {
+	public CorrelationProbabilityServiceImpl() {
+			// 计算协方差矩阵的行列式根
+		_sigma_det = Math.sqrt(_sigma_coefficient.det());
+		// 协方差的逆矩阵
+		_sigma_inv = _sigma_coefficient.inverse();
+		_sigma_prev = Math.pow(2 * Math.PI, Dimension / 2.0);
+
+	}
+	public void init() {
 		// 手工调整对角的方差
 		/*
 		_sigma_coefficient.set(0, 0, 0.005);
