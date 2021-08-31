@@ -68,7 +68,7 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 	private double prevProbs(Integer tidx, Integer oidx) {
 		if (tidx != null && oidx != null) {
 			// 原有的检测对象，对应原有的目标，拷贝上次计算的概率
-			return _probabilities[tidx * _target_objects.size() + oidx];
+			return _probabilities[tidx * _radar_objects.size() + oidx];
 
 		} else if (tidx != null && oidx == null) {
 			// 新增的检测对象，对应原有的目标，概率设置很低
@@ -101,7 +101,7 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 			tar.setEigen(origTar); // 刷新目标的坐标特征
 			for (CoObject obj : radars) {
 				Integer oidx = _radars_index.get(obj.getID()); // 原有检测对象集合的索引值
-				probs_new[tar_idx * targets.size() + obj_idx] = prevProbs(tidx, oidx);
+				probs_new[tar_idx * radars.size() + obj_idx] = prevProbs(tidx, oidx);
 				radar_objects.put(obj.getID(), obj);
 				radars_index.put(obj.getID(), obj_idx);
 				obj_idx += 1; // 下一个检测对象
@@ -125,9 +125,9 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 		if (tidx != null && oidx != null) {
 			for (int i = 0; i < _radar_objects.size(); ++i) {
 				// 原有概率全部清零
-				_probabilities[tidx * _target_objects.size() + i] = 0.0;
+				_probabilities[tidx * _radar_objects.size() + i] = 0.0;
 			}
-			_probabilities[tidx * _target_objects.size() + oidx] = 1.0; // 确定是匹配的
+			_probabilities[tidx * _radar_objects.size() + oidx] = 1.0; // 确定是匹配的
 			target.setEigen(radar);
 			return true;
 		}
@@ -137,31 +137,35 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 	@Override
 	public double[] calculateProbability() {
 		// 特征向量 3 x n
-		double[] tarobjs = new double[3 * _target_objects.size()];
+		double[] tarobjs = new double[3 * _radar_objects.size()];
 		// 条件概率 1 x n
-		double[] cond = new double[_target_objects.size()];
-		for (CoObject obj : _radar_objects.values()) {
+		double[] cond = new double[_radar_objects.size()];
+		//for (CoObject obj : _radar_objects.values()) {
+		for (CoObject tar : _target_objects.values()) {
 			// 一个检测对象
-			Integer obj_idx = _radars_index.get(obj.getID());
+			//Integer obj_idx = _radars_index.get(obj.getID());
+			Integer tar_idx = _targets_index.get(tar.getID());
 			// 映射所有的目标
-			for (CoObject tar : _target_objects.values()) {
-				Integer tar_idx = _targets_index.get(tar.getID());
+			//for (CoObject tar : _target_objects.values()) {
+		  for (CoObject obj : _radar_objects.values()) {
+				//Integer tar_idx = _targets_index.get(tar.getID());
+			  Integer obj_idx = _radars_index.get(obj.getID());
 				// 上一轮概率作为条件概率
-				cond[tar_idx] = _probabilities[tar_idx * _target_objects.size() + obj_idx];
+				cond[obj_idx] = _probabilities[tar_idx * _radar_objects.size() + obj_idx];
 				double[] temps = tar.subEigen(obj);
 				// 行转换列
-				tarobjs[tar_idx] = temps[0];
-				tarobjs[tar_idx + _target_objects.size()] = temps[1];
-				tarobjs[tar_idx + _target_objects.size() * 2] = temps[2];
+				tarobjs[obj_idx] = temps[0];
+				tarobjs[obj_idx + _radar_objects.size()] = temps[1];
+				tarobjs[obj_idx + _radar_objects.size() * 2] = temps[2];
 			}
 			// 计算新的概率（一个检测对象与所有目标的）
 			_cp_service = new CorrelationProbabilityServiceImpl();
 			_cp_service.init();
 			double[] prob_obj = _cp_service.calculateProbability(cond, tarobjs);
 			// 更新概率表, 按照检测对象更新所有目标
-			for (CoObject tar : _target_objects.values()) {
-				Integer tar_idx = _targets_index.get(tar.getID());
-				_probabilities[tar_idx * _target_objects.size() + obj_idx] = prob_obj[tar_idx];
+			for (CoObject obj : _radar_objects.values()) {
+				Integer obj_idx = _radars_index.get(tar.getID());
+				_probabilities[tar_idx * _radar_objects.size() + obj_idx] = prob_obj[obj_idx];
 			}
 
 		}
