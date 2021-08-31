@@ -182,7 +182,7 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 			for (CoObject obj : _radar_objects.values()) {
 				// 一个检测对象
 				Integer obj_idx = _radars_index.get(obj.getID());
-				radar_result.put(obj.getID(), _probabilities[tar_idx * _target_objects.size() + obj_idx]);
+				radar_result.put(obj.getID(), _probabilities[tar_idx * _radar_objects.size() + obj_idx]);
 			}
 			results.put(tar.getID(), radar_result);
 		}
