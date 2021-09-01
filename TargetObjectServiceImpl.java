@@ -164,7 +164,7 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 			double[] prob_obj = _cp_service.calculateProbability(cond, tarobjs);
 			// 更新概率表, 按照检测对象更新所有目标
 			for (CoObject obj : _radar_objects.values()) {
-				Integer obj_idx = _radars_index.get(tar.getID());
+				Integer obj_idx = _radars_index.get(obj.getID());
 				_probabilities[tar_idx * _radar_objects.size() + obj_idx] = prob_obj[obj_idx];
 			}
 
