@@ -27,44 +27,6 @@ public class TargetObjectServiceImpl implements ITargetObjectService {
 
 	}
 
-	/*
-	 * public class CoResult { private CoObject target, radar; // public int
-	 * target_idx, radar_idx; private float probability; public
-	 * CoResult(CoObject target, CoObject radar) { this.target = target;
-	 * this.radar = radar; probability = 0.0f; }
-	 * 
-	 * public float modifyProb(float prob) { float ret = probability;
-	 * probability = prob; return ret; }
-	 * 
-	 * public float modifyProb(CoResult other) { float ret = probability;
-	 * probability = other.probability; return ret; }
-	 * 
-	 * public boolean equalTarget(CoResult other) { if
-	 * (target.equals(other.target)) return true; return false; }
-	 * 
-	 * public boolean equalRadar(CoResult other) { if
-	 * (radar.equals(other.radar)) return true; return false; }
-	 * 
-	 * @Override public int hashCode() { String tmp = target.getID() +
-	 * radar.getID(); return tmp.hashCode(); }
-	 * 
-	 * @Override public boolean equals(Object obj) { if (obj instanceof
-	 * CoResult) { CoResult cores = (CoResult)obj; return
-	 * target.equals(cores.target) && radar.equals(cores.radar); } return false;
-	 * } }
-	 */
-
-	/*
-	 * @Override public int updateObjects(Set<CoObject> targets, Set<CoObject>
-	 * radars) { Set<CoResult> corSet = new HashSet<CoResult>(); for (CoObject
-	 * tar : targets) { for (CoObject obj : radars) { CoResult cor = new
-	 * CoResult(tar, obj); // 新的概率表，0.0 corSet.add(cor); } } // 2个List表的数据合并 //
-	 * 原有目标和原有检测对象复制，消失的则丢弃了 for (CoResult newCO : corSet) { for (CoResult
-	 * origCO : prob_map) { boolean radar_eq = newCO.equalRadar(origCO) ;
-	 * boolean target_eq = newCO.equalTarget(origCO); // 原有的目标和原有的检测对象 if
-	 * (newCO.equals(origCO)) { newCO.modifyProb(origCO); } } } //
-	 * 新增目标和新增检测对象的概率设置，它们概率应该较高 // 新增目标和原有检测对象，原有目标和新增检测对象，它们概率应该很低 }
-	 */
 	private double prevProbs(Integer tidx, Integer oidx) {
 		if (tidx != null && oidx != null) {
 			// 原有的检测对象，对应原有的目标，拷贝上次计算的概率
