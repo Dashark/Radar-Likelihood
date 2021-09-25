@@ -31,6 +31,8 @@ public interface ITargetObjectService {
 	 */
 	public boolean matchByRFID(CoObject target, CoObject radar);
 	
+	public boolean matchByFace(CoObject target, CoObject radar, float prob);
+
 	/**
 	 * 计算目标的关联概率。
 	 * 
